@@ -5,8 +5,9 @@ import { authOptions } from '@/lib/auth';
 
 export async function POST(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         // @ts-ignore
         const session = await getServerSession(authOptions);
@@ -15,7 +16,6 @@ export async function POST(
         }
 
         const { text } = await req.json();
-        const { id } = params; // Post ID
 
         if (!text || !text.trim()) {
             return NextResponse.json({ message: 'Comment text is required' }, { status: 400 });

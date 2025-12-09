@@ -20,6 +20,8 @@ model User {
   bio            String?
   occupation     String?
   location       String?
+  studentId      String?
+  phone          String?
   socialLinks    Json?       // Stores { linkedin, twitter, facebook }
   
   batchGroupId   String?
