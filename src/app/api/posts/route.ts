@@ -60,9 +60,9 @@ export async function GET(req: Request) {
         });
 
         // Transform posts to match expected frontend structure (likes: string[])
-        const formattedPosts = posts.map(post => ({
+        const formattedPosts = posts.map((post: any) => ({
             ...post,
-            likes: post.likes.map(like => like.userId)
+            likes: post.likes.map((like: any) => like.userId),
         }));
 
         return NextResponse.json(formattedPosts);
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
         // Format for frontend
         const formattedPost = {
             ...post,
-            likes: post.likes.map(l => l.userId)
+            likes: post.likes.map((l: any) => l.userId)
         };
 
         return NextResponse.json(formattedPost, { status: 201 });

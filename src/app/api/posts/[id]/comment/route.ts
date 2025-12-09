@@ -60,7 +60,7 @@ export async function POST(
         // Format
         const formattedPost = {
             ...updatedPost,
-            likes: updatedPost.likes.map(l => l.userId)
+            likes: updatedPost.likes.map((l: any) => l.userId)
         };
 
         return NextResponse.json(formattedPost);
