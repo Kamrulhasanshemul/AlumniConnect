@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';

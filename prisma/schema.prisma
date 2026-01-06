@@ -31,6 +31,16 @@ model User {
   posts          Post[]
   comments       Comment[]
   likes          Like[]
+  
+  notifications         Notification[] @relation("UserNotifications")
+  actedNotifications    Notification[] @relation("NotificationActor")
+  
+  sentMessages          Message[]      @relation("SentMessages")
+  receivedMessages      Message[]      @relation("ReceivedMessages")
+  
+  sentRequests          Connection[]   @relation("SentRequests")
+  receivedRequests      Connection[]   @relation("ReceivedRequests")
+
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
@@ -60,6 +70,7 @@ model Post {
   
   comments     Comment[]
   likes        Like[]
+  notifications Notification[]
 
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
@@ -90,4 +101,51 @@ model Like {
   createdAt DateTime @default(now())
 
   @@unique([userId, postId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // "LIKE" | "COMMENT" | "REPLY"
+  read      Boolean  @default(false)
+  
+  userId    String   // The recipient of the notification
+  user      User     @relation("UserNotifications", fields: [userId], references: [id])
+  
+  actorId   String   // The user who performed the action
+  actor     User     @relation("NotificationActor", fields: [actorId], references: [id])
+  
+  postId    String?
+  post      Post?    @relation(fields: [postId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  read       Boolean  @default(false)
+  
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  createdAt  DateTime @default(now())
+}
+
+model Connection {
+  id          String   @id @default(uuid())
+  status      String   // "PENDING" | "ACCEPTED"
+  
+  requesterId String
+  requester   User     @relation("SentRequests", fields: [requesterId], references: [id])
+  
+  addresseeId String
+  addressee   User     @relation("ReceivedRequests", fields: [addresseeId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([requesterId, addresseeId])
 }

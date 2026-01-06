@@ -14,7 +14,10 @@ import {
     Camera,
     Grid,
     Users,
-    Heart
+    Heart,
+    MessageCircle,
+    Share2,
+    MoreHorizontal
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -23,6 +26,7 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('posts');
+    const [posts, setPosts] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         bio: '',
         occupation: '',
@@ -32,6 +36,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         fetchProfile();
+        fetchPosts();
     }, []);
 
     const fetchProfile = async () => {
@@ -50,6 +55,21 @@ export default function ProfilePage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchPosts = async () => {
+        try {
+            // Fetch MY posts (session user) - assumes API detects session or we pass userId
+            // Ideally passing userId is explicit. But waiting for profile to load might be needed if we didn't have session immediately.
+            // Since we have session from useSession, let's use that or rely on API defaulting (if I didn't implement default).
+            // Actually, I implemented ?userId=X.
+            if (!session?.user?.id) return;
+            const res = await fetch(`/api/posts?userId=${session.user.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setPosts(data);
+            }
+        } catch (error) { console.error(error); }
     };
 
     const handleUpdate = async (e: React.FormEvent) => {
@@ -74,6 +94,14 @@ export default function ProfilePage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
     );
+
+    if (!profile) {
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-gray-50">
+                <p className="text-gray-500">Failed to load profile. Please try refreshing.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -167,8 +195,8 @@ export default function ProfilePage() {
                                             key={tab}
                                             onClick={() => setActiveTab(tab.toLowerCase())}
                                             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.toLowerCase()
-                                                    ? 'border-indigo-600 text-indigo-600'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                                ? 'border-indigo-600 text-indigo-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700'
                                                 }`}
                                         >
                                             {tab}
@@ -246,9 +274,53 @@ export default function ProfilePage() {
 
                         {/* Content Tabs (Placeholder content for now) */}
                         {activeTab === 'posts' && (
-                            <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center text-gray-500">
-                                <Grid className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                <p>No posts yet.</p>
+                            <div className="space-y-6">
+                                {posts.length === 0 ? (
+                                    <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center text-gray-500">
+                                        <Grid className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                        <p>No posts yet.</p>
+                                    </div>
+                                ) : (
+                                    posts.map((post) => (
+                                        <article key={post.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-100 p-0.5 border border-white shadow-sm overflow-hidden">
+                                                        {post.user.profilePhoto ? (
+                                                            <img src={post.user.profilePhoto} className="w-full h-full object-cover rounded-full" />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-white flex items-center justify-center text-xs font-bold text-gray-500">
+                                                                {post.user.name?.[0]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-900 text-sm">{post.user.name}</h3>
+                                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                                                            {post.visibility === 'batch' && <span className="bg-gray-100 px-1.5 py-0.5 rounded">🔒 Batch</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-gray-800 mb-6 text-[15px] leading-relaxed whitespace-pre-wrap">
+                                                {post.content}
+                                            </p>
+
+                                            <div className="flex items-center gap-1 pt-4 border-t border-gray-50">
+                                                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-500">
+                                                    <Heart className={`w-4 h-4 ${post.likes.includes(session?.user?.id) ? 'fill-pink-500 text-pink-500' : ''}`} />
+                                                    <span className="text-sm font-semibold">{post.likes.length}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-500">
+                                                    <MessageCircle className="w-4 h-4" />
+                                                    <span className="text-sm font-semibold">{post.comments?.length || 0}</span>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    ))
+                                )}
                             </div>
                         )}
                         {activeTab === 'friends' && (

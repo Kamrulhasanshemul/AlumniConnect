@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
@@ -21,10 +21,28 @@ export async function GET(req: Request) {
         const batchGroupId = currentUser?.batchGroupId;
         const { searchParams } = new URL(req.url);
         const filter = searchParams.get('filter'); // 'public', 'batch', or 'all' (default)
+        const userId = searchParams.get('userId');
 
         let where: any = {};
 
-        if (filter === 'public') {
+        if (userId) {
+            // Fetch posts for a specific user
+            where = {
+                userId,
+                // If viewing another user's profile, might want to check visibility? 
+                // For now, let's assume we show all posts on profile or respect public/batch logic.
+                // Simplicity: Show all public posts + batch posts if same batch
+            };
+
+            // Refined logic: If it's NOT the current user viewing filter, we should check visibility
+            if (userId !== session.user.id) {
+                where.OR = [
+                    { visibility: 'public', userId },
+                    { visibility: 'batch', userId, batchGroupId: currentUser?.batchGroupId }
+                ];
+                delete where.userId; // Moved to OR
+            }
+        } else if (filter === 'public') {
             where.visibility = 'public';
         } else if (filter === 'batch') {
             if (!batchGroupId) {
@@ -36,7 +54,8 @@ export async function GET(req: Request) {
             where = {
                 OR: [
                     { visibility: 'public' },
-                    { visibility: 'batch', batchGroupId: batchGroupId }
+                    { visibility: 'batch', batchGroupId: batchGroupId },
+                    { userId: session.user.id } // Always show my own posts
                 ]
             };
         }
@@ -46,7 +65,7 @@ export async function GET(req: Request) {
             orderBy: { createdAt: 'desc' },
             include: {
                 user: {
-                    select: { name: true, profilePhoto: true, passingYear: true }
+                    select: { id: true, name: true, profilePhoto: true, passingYear: true }
                 },
                 comments: {
                     include: {
@@ -105,7 +124,7 @@ export async function POST(req: Request) {
         const post = await prisma.post.create({
             data: postData,
             include: {
-                user: { select: { name: true, profilePhoto: true, passingYear: true } },
+                user: { select: { id: true, name: true, profilePhoto: true, passingYear: true } },
                 likes: true,
                 comments: true
             }
