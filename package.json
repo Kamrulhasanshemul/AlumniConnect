@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "pages:build": "npx @cloudflare/next-on-pages",
     "postinstall": "prisma generate",
     "start": "next start",
