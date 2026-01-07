@@ -1,4 +1,8 @@
-import { Pool } from 'pg';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
+
+// Required for Neon serverless driver on environments where WebSocket is not global or needs polyfill
+neonConfig.webSocketConstructor = ws;
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 
