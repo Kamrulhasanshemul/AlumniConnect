@@ -5,7 +5,7 @@ import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 const nextConfig: NextConfig = {
   // Add pg to serverExternalPackages to avoid bundling it if possible, 
   // though adapter-pg usage might still pull it in.
-  serverExternalPackages: ['@prisma/client', 'bcryptjs', 'oauth', 'pg'],
+  serverExternalPackages: ['@prisma/client', 'pg'],
 
   webpack: (config, { isServer, nextRuntime }) => {
     // 1. Polyfills for Client and Edge
