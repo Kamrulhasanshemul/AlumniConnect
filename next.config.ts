@@ -11,6 +11,13 @@ const nextConfig: NextConfig = {
     // 1. Polyfills for Client and Edge
     if (!isServer || nextRuntime === 'edge') {
       config.plugins.push(new NodePolyfillPlugin());
+      // Explicitly provide Buffer and process for edge robustness
+      config.plugins.push(
+        new config.webpack.ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+          process: 'process/browser',
+        })
+      );
     }
 
     // 2. Server/Edge Specific Handling
